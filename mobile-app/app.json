@@ -1,0 +1,85 @@
+{
+  "expo": {
+    "name": "HushRyd",
+    "slug": "hushryd-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon-new.png",
+    "userInterfaceStyle": "light",
+    "primaryColor": "#FF6B35",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hushryd.app",
+      "icon": "./assets/icon-new.png",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "HushRyd needs your location to provide ride services and SOS emergency features.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "HushRyd needs your location to provide ride services and SOS emergency features.",
+        "NSCameraUsageDescription": "HushRyd needs camera access to take photos for KYC verification.",
+        "NSPhotoLibraryUsageDescription": "HushRyd needs photo library access to select images for KYC verification.",
+        "GMSApiKey": "AIzaSyB_Yweyjcg4cxY3xNyYb4aED6vEsfWQmZ0"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B35",
+        "monochromeImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.hushryd",
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB_Yweyjcg4cxY3xNyYb4aED6vEsfWQmZ0"
+        }
+      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow HushRyd to use your location for ride services and SOS emergency features."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you select images for KYC verification.",
+          "cameraPermission": "The app accesses your camera to let you take photos for KYC verification."
+        }
+      ],
+      "expo-asset",
+      "@react-native-community/datetimepicker",
+      "expo-router",
+      "expo-font"
+    ],
+    "extra": {
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyB_Yweyjcg4cxY3xNyYb4aED6vEsfWQmZ0",
+      "googleMapsApiKey": "AIzaSyB_Yweyjcg4cxY3xNyYb4aED6vEsfWQmZ0",
+      "eas": {
+        "projectId": "54aafb57-5225-4cda-a793-9cbe05a9f2be"
+      }
+    },
+    "packagerOpts": {
+      "proxy": "http://localhost:3000"
+    },
+    "owner": "yoginaragani"
+  }
+}

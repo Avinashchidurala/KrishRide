@@ -1,0 +1,788 @@
+### HushRyd API Test Suite
+### This file contains HTTP requests for testing all APIs
+### Use with REST Client extension in VS Code or similar tools
+
+@baseUrl = http://localhost:3000
+@customerToken = YOUR_CUSTOMER_TOKEN_HERE
+@driverToken = YOUR_DRIVER_TOKEN_HERE
+@adminToken = YOUR_ADMIN_TOKEN_HERE
+
+### ============================================
+### HEALTH & INFO
+### ============================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### API Info
+GET {{baseUrl}}/api
+
+### ============================================
+### AUTHENTICATION
+### ============================================
+
+### Request OTP for Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "mobile": "+919876543210"
+}
+
+### Verify OTP and Login
+POST {{baseUrl}}/api/auth/login/verify
+Content-Type: application/json
+
+{
+  "mobile": "+919876543210",
+  "otp": "123456"
+}
+
+### Refresh Access Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+### Get Current User
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{customerToken}}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+### ============================================
+### USERS
+### ============================================
+
+### User Signup Step 1
+POST {{baseUrl}}/api/users/signup
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "mobile": "+919876543210",
+  "email": "john@example.com",
+  "gender": "male",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactMobile": "+919876543211",
+  "agreeTerms": true
+}
+
+### User Signup Step 2 - Verify OTP
+POST {{baseUrl}}/api/users/signup/verify
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "mobile": "+919876543210",
+  "email": "john@example.com",
+  "gender": "male",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactMobile": "+919876543211",
+  "referralCode": "HUSH1234",
+  "otp": "123456"
+}
+
+### Get User Profile
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer {{customerToken}}
+
+### Update User Profile
+PUT {{baseUrl}}/api/users/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe Updated",
+  "email": "john.updated@example.com",
+  "gender": "male",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactMobile": "+919876543211"
+}
+
+### Upload Profile Photo
+POST {{baseUrl}}/api/users/profile/photo
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "photoUrl": "https://example.com/profile-photo.jpg"
+}
+
+### ============================================
+### DRIVERS
+### ============================================
+
+### Driver Signup Step 1
+POST {{baseUrl}}/api/drivers/signup
+Content-Type: application/json
+
+{
+  "firstName": "Driver",
+  "lastName": "One",
+  "mobile": "+919876543220",
+  "email": "driver@example.com",
+  "gender": "male",
+  "emergencyContactName": "Emergency Contact",
+  "emergencyContactMobile": "+919876543221",
+  "agreeTerms": true
+}
+
+### Driver Signup Step 2 - Verify OTP
+POST {{baseUrl}}/api/drivers/signup/verify
+Content-Type: application/json
+
+{
+  "firstName": "Driver",
+  "lastName": "One",
+  "mobile": "+919876543220",
+  "email": "driver@example.com",
+  "gender": "male",
+  "emergencyContactName": "Emergency Contact",
+  "emergencyContactMobile": "+919876543221",
+  "otp": "123456"
+}
+
+### Submit KYC Documents
+POST {{baseUrl}}/api/drivers/kyc
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "aadharNumber": "123456789012",
+  "panNumber": "ABCDE1234F",
+  "drivingLicenseNumber": "DL1234567890",
+  "drivingLicenseExpiry": "2025-12-31",
+  "aadharUrl": "https://example.com/aadhar.jpg",
+  "panUrl": "https://example.com/pan.jpg",
+  "drivingLicenseUrl": "https://example.com/dl.jpg",
+  "selfieUrl": "https://example.com/selfie.jpg",
+  "bankName": "State Bank of India",
+  "bankIfscCode": "SBIN0001234",
+  "bankAccountNumber": "1234567890123456"
+}
+
+### Get KYC Status
+GET {{baseUrl}}/api/drivers/kyc/status
+Authorization: Bearer {{driverToken}}
+
+### Add Vehicle
+POST {{baseUrl}}/api/drivers/vehicles
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "model": "Honda Activa",
+  "color": "Red",
+  "plateNumber": "KA01AB1234",
+  "photos": [
+    "https://example.com/vehicle1.jpg",
+    "https://example.com/vehicle2.jpg"
+  ]
+}
+
+### Get Vehicles
+GET {{baseUrl}}/api/drivers/vehicles
+Authorization: Bearer {{driverToken}}
+
+### Activate Vehicle
+PUT {{baseUrl}}/api/drivers/vehicles/VEHICLE_ID/activate
+Authorization: Bearer {{driverToken}}
+
+### Get Driver Profile
+GET {{baseUrl}}/api/drivers/profile
+Authorization: Bearer {{driverToken}}
+
+### ============================================
+### RIDES
+### ============================================
+
+### Publish Ride
+POST {{baseUrl}}/api/rides
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "vehicleId": "VEHICLE_ID",
+  "pickupLocation": "Bangalore City",
+  "pickupLatitude": 12.9716,
+  "pickupLongitude": 77.5946,
+  "dropLocation": "Bangalore Airport",
+  "dropLatitude": 13.1986,
+  "dropLongitude": 77.7066,
+  "scheduledDateTime": "2024-12-25T10:00:00Z",
+  "seatsAvailable": 2,
+  "pricePerSeat": 200,
+  "perKmRate": 7,
+  "distanceKm": 40
+}
+
+### Search Rides
+GET {{baseUrl}}/api/rides?pickup=Bangalore&drop=Airport&date=2024-12-25&page=1&limit=20
+
+### Get Single Ride
+GET {{baseUrl}}/api/rides/RIDE_ID
+
+### Get Driver's Rides
+GET {{baseUrl}}/api/rides/driver/my-rides
+Authorization: Bearer {{driverToken}}
+
+### Cancel Ride
+DELETE {{baseUrl}}/api/rides/RIDE_ID
+Authorization: Bearer {{driverToken}}
+
+### ============================================
+### BOOKINGS
+### ============================================
+
+### Create Booking
+POST {{baseUrl}}/api/bookings
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "rideId": "RIDE_ID",
+  "passengerCount": 1,
+  "paymentMethod": "UPI"
+}
+
+### Get My Bookings
+GET {{baseUrl}}/api/bookings/my-bookings
+Authorization: Bearer {{customerToken}}
+
+### Get Booking Details
+GET {{baseUrl}}/api/bookings/BOOKING_ID
+Authorization: Bearer {{customerToken}}
+
+### Cancel Booking
+POST {{baseUrl}}/api/bookings/BOOKING_ID/cancel
+Authorization: Bearer {{customerToken}}
+
+### Verify Pickup OTP (Driver)
+POST {{baseUrl}}/api/bookings/BOOKING_ID/verify-pickup-otp
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "otp": "123456"
+}
+
+### Verify Drop PIN (Driver)
+POST {{baseUrl}}/api/bookings/BOOKING_ID/verify-drop-pin
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "pin": "1234"
+}
+
+### ============================================
+### PAYMENTS
+### ============================================
+
+### Create PayU Payment
+POST {{baseUrl}}/api/payments/payu/create-payment
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "amount": 500,
+  "firstname": "John",
+  "email": "john@example.com",
+  "phone": "+919876543210"
+}
+
+### Create Payment Request
+POST {{baseUrl}}/api/payments/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "BOOKING_ID",
+  "amount": 500
+}
+
+### Get Payment Status
+GET {{baseUrl}}/api/payments/status/TRANSACTION_ID
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### WALLET
+### ============================================
+
+### Get Wallet Balance
+GET {{baseUrl}}/api/wallet/balance
+Authorization: Bearer {{customerToken}}
+
+### Get Wallet Transactions
+GET {{baseUrl}}/api/wallet/transactions?page=1&limit=20
+Authorization: Bearer {{customerToken}}
+
+### Apply Wallet Balance to Booking
+POST {{baseUrl}}/api/wallet/apply
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "BOOKING_ID",
+  "amount": 100
+}
+
+### ============================================
+### REFERRALS
+### ============================================
+
+### Get Referral Code
+GET {{baseUrl}}/api/referrals/code
+Authorization: Bearer {{customerToken}}
+
+### Get Referral Stats
+GET {{baseUrl}}/api/referrals/stats
+Authorization: Bearer {{customerToken}}
+
+### Apply Referral Code
+POST {{baseUrl}}/api/referrals/apply
+Content-Type: application/json
+
+{
+  "referralCode": "HUSH1234",
+  "customerId": "CUSTOMER_ID"
+}
+
+### ============================================
+### ADDRESSES
+### ============================================
+
+### Get Saved Addresses
+GET {{baseUrl}}/api/addresses
+Authorization: Bearer {{customerToken}}
+
+### Add Saved Address
+POST {{baseUrl}}/api/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "label": "home",
+  "displayName": "Home Address",
+  "latitude": 12.9716,
+  "longitude": 77.5946
+}
+
+### Update Saved Address
+PUT {{baseUrl}}/api/addresses/ADDRESS_ID
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "displayName": "Updated Home Address",
+  "latitude": 12.9716,
+  "longitude": 77.5946
+}
+
+### Delete Saved Address
+DELETE {{baseUrl}}/api/addresses/ADDRESS_ID
+Authorization: Bearer {{customerToken}}
+
+### Get Address Suggestions
+GET {{baseUrl}}/api/addresses/suggestions
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### UPLOAD
+### ============================================
+
+### Get Presigned URL
+POST {{baseUrl}}/api/upload/presigned-url
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "fileName": "document.jpg",
+  "fileType": "image/jpeg",
+  "folder": "kyc"
+}
+
+### Upload KYC Document
+POST {{baseUrl}}/api/upload/kyc-documents
+Authorization: Bearer {{driverToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="document"; filename="aadhar.jpg"
+Content-Type: image/jpeg
+
+< ./aadhar.jpg
+------WebKitFormBoundary
+Content-Disposition: form-data; name="documentType"
+
+aadhar
+------WebKitFormBoundary--
+
+### Upload Base64 Image
+POST {{baseUrl}}/api/upload/base64-image
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "base64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+  "documentType": "profile",
+  "fileName": "profile.jpg"
+}
+
+### ============================================
+### SOS
+### ============================================
+
+### Create SOS Alert
+POST {{baseUrl}}/api/sos
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "latitude": 12.9716,
+  "longitude": 77.5946,
+  "message": "Emergency help needed",
+  "bookingId": "BOOKING_ID"
+}
+
+### Get SOS Alerts
+GET {{baseUrl}}/api/sos
+Authorization: Bearer {{customerToken}}
+
+### Update SOS Alert Status
+PUT {{baseUrl}}/api/sos/SOS_ID
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "status": "resolved"
+}
+
+### ============================================
+### FCM/NOTIFICATIONS
+### ============================================
+
+### Register FCM Token
+POST {{baseUrl}}/api/fcm/token
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "fcmToken": "FCM_TOKEN_HERE"
+}
+
+### Remove FCM Token
+DELETE {{baseUrl}}/api/fcm/token
+Authorization: Bearer {{customerToken}}
+
+### Subscribe to Web Push
+POST {{baseUrl}}/api/fcm/web-push/subscribe
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "subscription": {
+    "endpoint": "https://fcm.googleapis.com/...",
+    "keys": {
+      "p256dh": "...",
+      "auth": "..."
+    }
+  }
+}
+
+### Get VAPID Public Key
+GET {{baseUrl}}/api/fcm/web-push/public-key
+
+### ============================================
+### RATINGS
+### ============================================
+
+### Submit Rating
+POST {{baseUrl}}/api/ratings
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "BOOKING_ID",
+  "rating": 5,
+  "review": "Great driver, safe ride!"
+}
+
+### Get Driver Ratings
+GET {{baseUrl}}/api/ratings/driver/DRIVER_ID
+
+### Get My Ratings
+GET {{baseUrl}}/api/ratings/my-ratings
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### COMPLAINTS
+### ============================================
+
+### Create Complaint
+POST {{baseUrl}}/api/complaints
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "BOOKING_ID",
+  "subject": "Driver was rude",
+  "description": "The driver was very rude and unprofessional during the ride."
+}
+
+### Get My Complaints
+GET {{baseUrl}}/api/complaints?page=1&limit=20&status=open
+Authorization: Bearer {{customerToken}}
+
+### Get Complaint Details
+GET {{baseUrl}}/api/complaints/COMPLAINT_ID
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### SUPPORT TICKETS
+### ============================================
+
+### Create Support Ticket
+POST {{baseUrl}}/api/support
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bookingId": "BOOKING_ID",
+  "subject": "Payment issue",
+  "description": "I was charged twice for the same booking.",
+  "priority": "high"
+}
+
+### Get My Support Tickets
+GET {{baseUrl}}/api/support?page=1&limit=20&status=open
+Authorization: Bearer {{customerToken}}
+
+### Get Support Ticket Details
+GET {{baseUrl}}/api/support/TICKET_ID
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### EMERGENCY CONTACTS
+### ============================================
+
+### Get Emergency Contacts
+GET {{baseUrl}}/api/emergency-contacts
+Authorization: Bearer {{customerToken}}
+
+### Add Emergency Contact
+POST {{baseUrl}}/api/emergency-contacts
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "mobile": "+919876543211",
+  "relationship": "spouse",
+  "isPrimary": true
+}
+
+### Update Emergency Contact
+PUT {{baseUrl}}/api/emergency-contacts/CONTACT_ID
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Jane Doe Updated",
+  "mobile": "+919876543211",
+  "relationship": "spouse",
+  "isPrimary": true
+}
+
+### Delete Emergency Contact
+DELETE {{baseUrl}}/api/emergency-contacts/CONTACT_ID
+Authorization: Bearer {{customerToken}}
+
+### ============================================
+### DRIVER EARNINGS
+### ============================================
+
+### Get Driver Earnings Summary
+GET {{baseUrl}}/api/driver-earnings/summary
+Authorization: Bearer {{driverToken}}
+
+### Get Driver Earnings History
+GET {{baseUrl}}/api/driver-earnings/history?page=1&limit=20&startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{driverToken}}
+
+### Request Payout
+POST {{baseUrl}}/api/driver-earnings/payout/request
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "amount": 1000
+}
+
+### Get Payout History
+GET {{baseUrl}}/api/driver-earnings/payouts?page=1&limit=20&status=pending
+Authorization: Bearer {{driverToken}}
+
+### ============================================
+### ADMIN APIs
+### ============================================
+
+### Dashboard Stats
+GET {{baseUrl}}/api/admin/dashboard/stats
+Authorization: Bearer {{adminToken}}
+
+### Get All Users
+GET {{baseUrl}}/api/admin/users?page=1&limit=20&role=customer&search=john
+Authorization: Bearer {{adminToken}}
+
+### Get User Details
+GET {{baseUrl}}/api/admin/users/USER_ID
+Authorization: Bearer {{adminToken}}
+
+### Create User
+POST {{baseUrl}}/api/admin/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Admin",
+  "lastName": "User",
+  "mobile": "+919876543299",
+  "email": "admin@example.com",
+  "role": "admin",
+  "gender": "male",
+  "age": 30
+}
+
+### Update User Status
+PUT {{baseUrl}}/api/admin/users/USER_ID/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### Get All Rides
+GET {{baseUrl}}/api/admin/rides?page=1&limit=20&status=active
+Authorization: Bearer {{adminToken}}
+
+### Get Live Rides
+GET {{baseUrl}}/api/admin/rides/live?page=1&limit=50
+Authorization: Bearer {{adminToken}}
+
+### Get All Bookings
+GET {{baseUrl}}/api/admin/bookings?page=1&limit=20&status=confirmed&paymentStatus=success
+Authorization: Bearer {{adminToken}}
+
+### Get Pending KYC
+GET {{baseUrl}}/api/admin/kyc/pending
+Authorization: Bearer {{adminToken}}
+
+### Approve/Reject KYC
+PUT {{baseUrl}}/api/admin/kyc/DRIVER_ID/verify
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "approved",
+  "remarks": "All documents verified"
+}
+
+### Get Complaints
+GET {{baseUrl}}/api/admin/complaints?page=1&limit=20&status=open
+Authorization: Bearer {{adminToken}}
+
+### Update Complaint Status
+PUT {{baseUrl}}/api/admin/complaints/COMPLAINT_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "resolved"
+}
+
+### Get SOS Alerts
+GET {{baseUrl}}/api/admin/sos?page=1&limit=20&status=active
+Authorization: Bearer {{adminToken}}
+
+### Get Revenue Report
+GET {{baseUrl}}/api/admin/revenue?startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+### Get All Payouts
+GET {{baseUrl}}/api/admin/payouts?page=1&limit=20&status=pending
+Authorization: Bearer {{adminToken}}
+
+### Update Payout Status
+PUT {{baseUrl}}/api/admin/payouts/PAYOUT_ID/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "transactionId": "TXN123456"
+}
+
+### Get Support Tickets
+GET {{baseUrl}}/api/admin/support-tickets?page=1&limit=20&status=open&priority=high
+Authorization: Bearer {{adminToken}}
+
+### Update Support Ticket
+PUT {{baseUrl}}/api/admin/support-tickets/TICKET_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "in_progress",
+  "priority": "high",
+  "assignedTo": "ADMIN_ID"
+}
+
+### Get All Vehicles
+GET {{baseUrl}}/api/admin/vehicles?page=1&limit=20&driverId=DRIVER_ID&isActive=true
+Authorization: Bearer {{adminToken}}
+
+### Update Vehicle Status
+PUT {{baseUrl}}/api/admin/vehicles/VEHICLE_ID/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### Get Analytics
+GET {{baseUrl}}/api/admin/analytics?startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+### Get Surge Pricing Settings
+GET {{baseUrl}}/api/admin/settings/surge-pricing?city=Bangalore
+Authorization: Bearer {{adminToken}}
+
+### Update Surge Pricing Settings
+PUT {{baseUrl}}/api/admin/settings/surge-pricing
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "multiplier": 1.25,
+  "basePricePerKm": 7,
+  "scope": "global",
+  "city": null
+}
+

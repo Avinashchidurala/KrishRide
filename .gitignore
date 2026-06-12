@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+.rules
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+
+# Expo
+mobile-app/.expo/
+mobile-app/dist/
+mobile-app/web-build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache/
+.temp/
+*.pem
+
+# Project Specific
+springboot-backend/src/main/resources/application.properties
+react-frontend/public/images/x_Co-founder1.jpg
+react-frontend/public/images/x_Co-founder2.jpg

@@ -1,0 +1,614 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String             @id @default(uuid()) @db.VarChar(255)
+  first_name            String             @db.VarChar(255)
+  last_name             String             @db.VarChar(255)
+  age                   Int
+  gender                String?            @db.VarChar(50)
+  mobile                String             @unique(map: "users_mobile_unique") @db.VarChar(20)
+  email                 String?            @unique(map: "users_email_unique") @db.VarChar(255)
+  is_phone_verified     Boolean            @default(false)
+  is_active             Boolean            @default(true)
+  profile_completed     Boolean            @default(false)
+  last_login            DateTime?          @db.DateTime(0)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+  role                  String             @db.VarChar(50)
+  profile_photo_url     String?            @db.Text
+  auth_provider         String             @default("otp") @db.VarChar(50)
+  provider_id           String?            @db.VarChar(255)
+  fcm_token             String?            @map("fcm_token") @db.Text
+  web_push_subscription String?            @map("web_push_subscription") @db.Text
+  admin                 Admin?
+  chatMessages          ChatMessage[]      @relation("ChatSender")
+  chatSessions          ChatSession[]      @relation("ChatCustomer")
+  complaints            Complaint[]
+  customer              Customer?
+  driver                Driver?
+  emergencyContacts     EmergencyContact[]
+  notifications         Notification[]
+  refreshTokens         RefreshToken[]
+  savedAddresses        SavedAddress[]
+  sosAlerts             SosAlert[]
+  supportTickets        SupportTicket[]
+
+  @@map("users")
+}
+
+model Driver {
+  id                       String                    @id @default(uuid()) @db.VarChar(255)
+  userId                   String                    @unique(map: "drivers_user_id_unique") @map("user_id") @db.VarChar(255)
+  is_driver_approved       Boolean?                  @default(false) @map("is_driver_approved")
+  license_number           String?                   @map("license_number") @db.VarChar(100)
+  license_expiry           DateTime?                 @map("license_expiry") @db.DateTime(0)
+  total_rides              Int?                      @default(0) @map("total_rides")
+  completed_rides          Int?                      @default(0) @map("completed_rides")
+  total_earnings           Decimal?                  @default(0.00) @map("total_earnings") @db.Decimal(10, 2)
+  wallet_balance           Decimal?                  @default(0.00) @map("wallet_balance") @db.Decimal(10, 2)
+  average_rating           Decimal?                  @default(0.00) @map("average_rating") @db.Decimal(3, 2)
+  total_ratings            Int?                      @default(0) @map("total_ratings")
+  bank_name                String?                   @map("bank_name") @db.VarChar(255)
+  bank_ifsc_code           String?                   @map("bank_ifsc_code") @db.VarChar(20)
+  bank_account_number      String?                   @map("bank_account_number") @db.VarChar(50)
+  aadhar_number            String?                   @map("aadhar_number") @db.VarChar(20)
+  pan_number               String?                   @map("pan_number") @db.VarChar(20)
+  kyc_documents            Json?                     @map("kyc_documents")
+  selfie_url               String?                   @map("selfie_url") @db.Text
+  kyc_verified_at          DateTime?                 @map("kyc_verified_at") @db.DateTime(0)
+  kyc_expires_at           DateTime?                 @map("kyc_expires_at") @db.DateTime(0)
+  kyc_status               String?                   @default("pending") @map("kyc_status") @db.VarChar(50)
+  kyc_submitted_at         DateTime?                 @map("kyc_submitted_at") @db.DateTime(0)
+  createdAt                DateTime?                 @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt                DateTime?                 @updatedAt @map("updated_at") @db.DateTime(0)
+  adminWalletTransactions  AdminWalletTransaction[]
+  driverVerifications      DriverVerification[]
+  driverWalletTransactions DriverWalletTransaction[]
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  payouts                  Payout[]
+  rides                    Ride[]                    @relation("DriverRides")
+  vehicles                 Vehicle[]
+
+  @@index([userId], map: "drivers_user_id_index")
+  @@map("drivers")
+}
+
+model Customer {
+  id                      String                   @id @default(uuid()) @db.VarChar(255)
+  userId                  String                   @unique(map: "customers_user_id_unique") @map("user_id") @db.VarChar(255)
+  preferences             Json?
+  total_bookings          Int?                     @default(0) @map("total_bookings")
+  completed_bookings      Int?                     @default(0) @map("completed_bookings")
+  cancelled_bookings      Int?                     @default(0) @map("cancelled_bookings")
+  average_rating          Decimal?                 @default(0.00) @map("average_rating") @db.Decimal(3, 2)
+  total_ratings           Int?                     @default(0) @map("total_ratings")
+  loyalty_points          Int?                     @default(0) @map("loyalty_points")
+  wallet_balance          Decimal?                 @default(0.00) @map("wallet_balance") @db.Decimal(10, 2)
+  drop_pin                String?                  @map("drop_pin") @db.VarChar(10)
+  createdAt               DateTime?                @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt               DateTime?                @updatedAt @map("updated_at") @db.DateTime(0)
+  adminWalletTransactions AdminWalletTransaction[]
+  bookings                Booking[]
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  savedAddresses          SavedAddress[]
+  subscriptions           Subscription[]
+  walletTransactions      WalletTransaction[]
+
+  @@index([userId], map: "customers_user_id_index")
+  @@map("customers")
+}
+
+model Admin {
+  id                 String                   @id @default(uuid()) @db.VarChar(255)
+  userId             String                   @unique(map: "admins_user_id_unique") @map("user_id") @db.VarChar(255)
+  permissions        Json?
+  createdAt          DateTime?                @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime?                @updatedAt @map("updated_at") @db.DateTime(0)
+  wallet_balance     Decimal?                 @default(0.00) @map("wallet_balance") @db.Decimal(10, 2)
+  walletTransactions AdminWalletTransaction[]
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "admins_user_id_index")
+  @@map("admins")
+}
+
+model Vehicle {
+  id                            String    @id @default(uuid()) @db.VarChar(255)
+  driverId                      String    @map("driver_id") @db.VarChar(255)
+  vehicle_make                  String?   @map("vehicle_make") @db.VarChar(100)
+  vehicle_model                 String?   @map("vehicle_model") @db.VarChar(100)
+  vehicle_year                  Int?      @map("vehicle_year")
+  vehicle_color                 String?   @map("vehicle_color") @db.VarChar(50)
+  vehicle_plate_number          String?   @map("vehicle_plate_number") @db.VarChar(50)
+  vehicle_registration_number   String?   @map("vehicle_registration_number") @db.VarChar(100)
+  vehicle_registration_document String?   @map("vehicle_registration_document") @db.Text
+  vehicle_insurance_expiry      DateTime? @map("vehicle_insurance_expiry") @db.DateTime(0)
+  inside_photos                 Json?     @map("inside_photos")
+  outside_photos                Json?     @map("outside_photos")
+  is_active                     Boolean?  @default(true) @map("is_active")
+  createdAt                     DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt                     DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  Ride                          Ride[]
+  driver                        Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([driverId], map: "vehicles_driver_id_index")
+  @@map("vehicles")
+}
+
+model DriverVerification {
+  id               String    @id @default(uuid()) @db.VarChar(255)
+  driverId         String    @map("driver_id") @db.VarChar(255)
+  document_type    String    @map("document_type") @db.VarChar(50)
+  document_number  String?   @map("document_number") @db.VarChar(100)
+  document_url     String?   @map("document_url") @db.Text
+  status           String    @default("pending") @db.VarChar(50)
+  verified_at      DateTime? @map("verified_at") @db.DateTime(0)
+  expires_at       DateTime? @map("expires_at") @db.DateTime(0)
+  rejection_reason String?   @map("rejection_reason") @db.Text
+  createdAt        DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  driver           Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([driverId], map: "driver_verifications_driver_id_index")
+  @@map("driver_verifications")
+}
+
+model Ride {
+  id                 String           @id @default(uuid()) @db.VarChar(255)
+  driverId           String           @map("driver_id") @db.VarChar(255)
+  vehicleId          String?          @map("vehicle_id") @db.VarChar(255)
+  start_location     String           @map("start_location") @db.VarChar(255)
+  end_location       String           @map("end_location") @db.VarChar(255)
+  start_latitude     Decimal?         @map("start_latitude") @db.Decimal(10, 8)
+  start_longitude    Decimal?         @map("start_longitude") @db.Decimal(10, 8)
+  end_latitude       Decimal?         @map("end_latitude") @db.Decimal(10, 8)
+  end_longitude      Decimal?         @map("end_longitude") @db.Decimal(10, 8)
+  scheduled_time     DateTime         @map("scheduled_time") @db.DateTime(0)
+  seats_available    Int              @default(1)
+  seats_booked       Int              @default(0)
+  base_fare          Decimal          @db.Decimal(10, 2)
+  per_km_rate        Decimal          @db.Decimal(10, 2)
+  price_per_seat     Decimal?         @db.Decimal(10, 2)
+  total_price        Decimal?         @db.Decimal(10, 2)
+  distance_km        Decimal?         @db.Decimal(10, 2)
+  status             String           @default("active") @db.VarChar(50)
+  is_surge           Boolean          @default(false)
+  surge_multiplier   Decimal?         @default(1.00) @db.Decimal(3, 2)
+  route_polyline     String?          @db.Text
+  started_at         DateTime?
+  completed_at       DateTime?
+  last_active_at     DateTime?
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  end_city           String?          @db.VarChar(100)
+  end_state          String?          @db.VarChar(100)
+  message            String?          @db.Text
+  route_buffer_km    Decimal          @default(5.00) @db.Decimal(5, 2)
+  route_distance_km  Decimal?         @db.Decimal(10, 2)
+  route_duration_min Int?
+  start_city         String?          @db.VarChar(100)
+  start_state        String?          @db.VarChar(100)
+  bookings           Booking[]
+  majorCities        RideMajorCity[]
+  routePoints        RideRoutePoint[]
+  driver             Driver           @relation("DriverRides", fields: [driverId], references: [id], onDelete: Cascade)
+  vehicle            Vehicle?         @relation(fields: [vehicleId], references: [id])
+  supportTickets     SupportTicket[]
+
+  @@index([start_state])
+  @@index([end_state])
+  @@index([start_city, start_state])
+  @@index([end_city, end_state])
+  @@index([driverId])
+  @@index([status])
+  @@index([scheduled_time])
+  @@index([seats_booked])
+  @@index([vehicleId], map: "rides_vehicle_id_fkey")
+  @@map("rides")
+}
+
+model RideMajorCity {
+  id         String  @id @default(uuid())
+  rideId     String
+  cityName   String  @db.VarChar(255)
+  latitude   Decimal @db.Decimal(10, 8)
+  longitude  Decimal @db.Decimal(11, 8)
+  routeIndex Int
+  ride       Ride    @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@index([cityName])
+  @@map("ride_major_cities")
+}
+
+model RideRoutePoint {
+  id        String  @id @default(uuid())
+  rideId    String
+  latitude  Decimal @db.Decimal(10, 8)
+  longitude Decimal @db.Decimal(11, 8)
+  seqIndex  Int
+  ride      Ride    @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@index([rideId, seqIndex])
+  @@map("ride_route_points")
+}
+
+model Booking {
+  id                      String                   @id @default(uuid()) @db.VarChar(255)
+  booking_number          String                   @unique @map("booking_number") @db.VarChar(50)
+  rideId                  String                   @map("ride_id") @db.VarChar(255)
+  customerId              String                   @map("customer_id") @db.VarChar(255)
+  passengerCount          Int                      @default(1)
+  back_seat_count         Int                      @default(0)
+  pickup_location         String?                  @db.VarChar(255)
+  pickup_latitude         Decimal?                 @db.Decimal(10, 8)
+  pickup_longitude        Decimal?                 @db.Decimal(10, 8)
+  drop_location           String?                  @db.VarChar(255)
+  drop_latitude           Decimal?                 @db.Decimal(10, 8)
+  drop_longitude          Decimal?                 @db.Decimal(10, 8)
+  base_fare               Decimal                  @db.Decimal(10, 2)
+  platform_fee            Decimal                  @default(10.00) @db.Decimal(10, 2)
+  service_tax             Decimal?                 @db.Decimal(10, 2)
+  driver_fee              Decimal                  @default(20.00) @db.Decimal(10, 2)
+  total_fare              Decimal                  @db.Decimal(10, 2)
+  currency                String                   @default("INR") @db.VarChar(10)
+  status                  String                   @default("pending") @db.VarChar(50)
+  paymentStatus           String                   @default("pending") @map("payment_status") @db.VarChar(50)
+  paymentMethod           String?                  @map("payment_method") @db.VarChar(50)
+  utr_number              String?                  @db.VarChar(100)
+  pickup_otp              String?                  @db.VarChar(10)
+  drop_pin                String?                  @db.VarChar(10)
+  pickup_verified         Boolean                  @default(false)
+  drop_verified           Boolean                  @default(false)
+  invoice_url             String?
+  invoice_sent_email      Boolean                  @default(false)
+  invoice_sent_whatsapp   Boolean                  @default(false)
+  invoice_sent_sms        Boolean                  @default(false)
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  rating_id               String?                  @db.VarChar(255)
+  cancelledBy             String?
+  adminWalletTransactions AdminWalletTransaction[]
+  customer                Customer                 @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ride                    Ride                     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  rating                  Rating?
+  supportTickets          SupportTicket[]
+
+  @@index([rideId])
+  @@index([customerId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model WalletTransaction {
+  id               String        @id @default(uuid()) @db.VarChar(255)
+  customerId       String        @map("customer_id") @db.VarChar(255)
+  amount           Decimal       @db.Decimal(10, 2)
+  type             String        @db.VarChar(50)
+  transaction_type String        @map("transaction_type") @db.VarChar(50)
+  description      String?       @db.Text
+  bookingId        String?       @map("booking_id") @db.VarChar(255)
+  subscriptionId   String?       @map("subscription_id") @db.VarChar(255)
+  referralId       String?       @map("referral_id") @db.VarChar(255)
+  valid_till       DateTime?     @map("valid_till") @db.DateTime(0)
+  is_expired       Boolean       @default(false) @map("is_expired")
+  createdAt        DateTime?     @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime?     @updatedAt @map("updated_at") @db.DateTime(0)
+  customer         Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  referral         Referral?     @relation(fields: [referralId], references: [id], onUpdate: NoAction)
+  subscription     Subscription? @relation(fields: [subscriptionId], references: [id], onUpdate: NoAction)
+
+  @@index([customerId], map: "wallet_transactions_customer_id_index")
+  @@index([valid_till], map: "wallet_transactions_valid_till_index")
+  @@index([referralId], map: "wallet_transactions_referral_id_fkey")
+  @@index([subscriptionId], map: "wallet_transactions_subscription_id_fkey")
+  @@map("wallet_transactions")
+}
+
+model DriverWalletTransaction {
+  id               String    @id @default(uuid()) @db.VarChar(255)
+  driverId         String    @map("driver_id") @db.VarChar(255)
+  amount           Decimal   @db.Decimal(10, 2)
+  type             String    @db.VarChar(50)
+  transaction_type String    @map("transaction_type") @db.VarChar(50)
+  description      String?   @db.Text
+  bookingId        String?   @map("booking_id") @db.VarChar(255)
+  payoutId         String?   @map("payout_id") @db.VarChar(255)
+  referralId       String?   @map("referral_id") @db.VarChar(255)
+  valid_till       DateTime? @map("valid_till") @db.DateTime(0)
+  is_expired       Boolean   @default(false) @map("is_expired")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  driver           Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  payout           Payout?   @relation(fields: [payoutId], references: [id], onUpdate: NoAction)
+  referral         Referral? @relation(fields: [referralId], references: [id], onUpdate: NoAction)
+
+  @@index([driverId], map: "driver_wallet_transactions_driver_id_index")
+  @@index([valid_till], map: "driver_wallet_transactions_valid_till_index")
+  @@index([referralId], map: "driver_wallet_transactions_referral_id_fkey")
+  @@index([payoutId], map: "driver_wallet_transactions_payout_id_fkey")
+  @@map("driver_wallet_transactions")
+}
+
+model AdminWalletTransaction {
+  id               String    @id @default(uuid()) @db.VarChar(255)
+  adminId          String?   @map("admin_id") @db.VarChar(255)
+  amount           Decimal   @db.Decimal(10, 2)
+  type             String    @db.VarChar(50)
+  transaction_type String    @map("transaction_type") @db.VarChar(50)
+  description      String?   @db.Text
+  bookingId        String?   @map("booking_id") @db.VarChar(255)
+  payoutId         String?   @map("payout_id") @db.VarChar(255)
+  driverId         String?   @map("driver_id") @db.VarChar(255)
+  customerId       String?   @map("customer_id") @db.VarChar(255)
+  valid_till       DateTime? @map("valid_till") @db.DateTime(0)
+  is_expired       Boolean   @default(false) @map("is_expired")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  admin            Admin?    @relation(fields: [adminId], references: [id])
+  booking          Booking?  @relation(fields: [bookingId], references: [id])
+  customer         Customer? @relation(fields: [customerId], references: [id])
+  driver           Driver?   @relation(fields: [driverId], references: [id])
+  payout           Payout?   @relation(fields: [payoutId], references: [id], onUpdate: NoAction)
+
+  @@index([adminId], map: "admin_wallet_transactions_admin_id_index")
+  @@index([driverId], map: "admin_wallet_transactions_driver_id_index")
+  @@index([customerId], map: "admin_wallet_transactions_customer_id_index")
+  @@index([bookingId], map: "admin_wallet_transactions_booking_id_index")
+  @@index([payoutId], map: "admin_wallet_transactions_payout_id_index")
+  @@index([valid_till], map: "admin_wallet_transactions_valid_till_index")
+  @@map("admin_wallet_transactions")
+}
+
+model Subscription {
+  id                      String              @id @default(uuid()) @db.VarChar(255)
+  customerId              String              @map("customer_id") @db.VarChar(255)
+  plan_type               String              @map("plan_type") @db.VarChar(50)
+  amount                  Decimal             @db.Decimal(10, 2)
+  cashback_per_trip       Decimal             @map("cashback_per_trip") @db.Decimal(10, 2)
+  max_benefit             Decimal             @map("max_benefit") @db.Decimal(10, 2)
+  validity_days           Int                 @map("validity_days")
+  status                  String              @default("active") @db.VarChar(50)
+  expires_at              DateTime            @map("expires_at") @db.DateTime(0)
+  total_cashback_received Decimal             @default(0.00) @map("total_cashback_received") @db.Decimal(10, 2)
+  createdAt               DateTime?           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt               DateTime?           @updatedAt @map("updated_at") @db.DateTime(0)
+  customer                Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  walletTransactions      WalletTransaction[]
+
+  @@index([customerId], map: "subscriptions_customer_id_index")
+  @@index([status], map: "subscriptions_status_index")
+  @@map("subscriptions")
+}
+
+model Referral {
+  id                       String                    @id @default(uuid()) @db.VarChar(255)
+  referrerId               String                    @map("referrer_id") @db.VarChar(255)
+  refereeId                String?                   @unique(map: "referrals_referee_id_unique") @map("referee_id") @db.VarChar(255)
+  referral_code            String                    @unique(map: "referrals_referral_code_unique") @map("referral_code") @db.VarChar(50)
+  amount                   Decimal                   @default(100.00) @db.Decimal(10, 2)
+  status                   String                    @default("pending") @db.VarChar(50)
+  valid_till               DateTime                  @map("valid_till") @db.DateTime(0)
+  credited_at              DateTime?                 @map("credited_at") @db.DateTime(0)
+  createdAt                DateTime?                 @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt                DateTime?                 @updatedAt @map("updated_at") @db.DateTime(0)
+  user_type                String                    @default("customer") @map("user_type") @db.VarChar(50)
+  driverWalletTransactions DriverWalletTransaction[]
+  walletTransactions       WalletTransaction[]
+
+  @@index([referrerId], map: "referrals_referrer_id_index")
+  @@index([refereeId], map: "referrals_referee_id_index")
+  @@index([referral_code], map: "referrals_referral_code_index")
+  @@index([user_type], map: "referrals_user_type_index")
+  @@map("referrals")
+}
+
+model SavedAddress {
+  id           String    @id @default(uuid()) @db.VarChar(255)
+  userId       String?   @map("user_id") @db.VarChar(255)
+  customerId   String?   @map("customer_id") @db.VarChar(255)
+  address_type String    @map("address_type") @db.VarChar(50)
+  address      String    @db.VarChar(255)
+  latitude     Decimal?  @db.Decimal(10, 8)
+  longitude    Decimal?  @db.Decimal(10, 8)
+  is_default   Boolean   @default(false) @map("is_default")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "saved_addresses_user_id_index")
+  @@index([customerId], map: "saved_addresses_customer_id_index")
+  @@map("saved_addresses")
+}
+
+model EmergencyContact {
+  id           String    @id @default(uuid()) @db.VarChar(255)
+  userId       String    @map("user_id") @db.VarChar(255)
+  name         String    @db.VarChar(255)
+  mobile       String    @db.VarChar(20)
+  relationship String?   @db.VarChar(50)
+  is_primary   Boolean   @default(false) @map("is_primary")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "emergency_contacts_user_id_index")
+  @@map("emergency_contacts")
+}
+
+model SosAlert {
+  id        String    @id @default(uuid()) @db.VarChar(255)
+  userId    String    @map("user_id") @db.VarChar(255)
+  bookingId String?   @map("booking_id") @db.VarChar(255)
+  latitude  Decimal   @db.Decimal(10, 8)
+  longitude Decimal   @db.Decimal(10, 8)
+  address   String?   @db.VarChar(255)
+  message   String?   @db.Text
+  status    String    @default("active") @db.VarChar(50)
+  createdAt DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "sos_alerts_user_id_index")
+  @@index([status], map: "sos_alerts_status_index")
+  @@map("sos_alerts")
+}
+
+model Complaint {
+  id          String    @id @default(uuid()) @db.VarChar(255)
+  userId      String    @map("user_id") @db.VarChar(255)
+  bookingId   String?   @map("booking_id") @db.VarChar(255)
+  subject     String    @db.VarChar(255)
+  description String    @db.Text
+  status      String    @default("open") @db.VarChar(50)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "complaints_user_id_index")
+  @@map("complaints")
+}
+
+model SupportTicket {
+  id                String    @id @default(uuid()) @db.VarChar(255)
+  userId            String?   @map("user_id") @db.VarChar(255)
+  bookingId         String?   @map("booking_id") @db.VarChar(255)
+  rideId            String?   @map("ride_id") @db.VarChar(255)
+  subject           String    @db.VarChar(255)
+  description       String    @db.Text
+  priority          String    @default("medium") @db.VarChar(50)
+  status            String    @default("open") @db.VarChar(50)
+  assigned_to       String?   @map("assigned_to") @db.VarChar(255)
+  created_by_system Boolean   @default(false) @map("created_by_system")
+  createdAt         DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  booking           Booking?  @relation(fields: [bookingId], references: [id], onUpdate: NoAction)
+  ride              Ride?     @relation(fields: [rideId], references: [id], onUpdate: NoAction)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "support_tickets_user_id_index")
+  @@index([status], map: "support_tickets_status_index")
+  @@index([bookingId], map: "support_tickets_booking_id_index")
+  @@index([rideId], map: "support_tickets_ride_id_index")
+  @@map("support_tickets")
+}
+
+model Payout {
+  id                       String                    @id @default(uuid()) @db.VarChar(255)
+  driverId                 String                    @map("driver_id") @db.VarChar(255)
+  amount                   Decimal                   @db.Decimal(10, 2)
+  payout_method            String                    @map("payout_method") @db.VarChar(50)
+  status                   String                    @default("pending") @db.VarChar(50)
+  transaction_id           String?                   @map("transaction_id") @db.VarChar(255)
+  processed_at             DateTime?                 @map("processed_at") @db.DateTime(0)
+  createdAt                DateTime?                 @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt                DateTime?                 @updatedAt @map("updated_at") @db.DateTime(0)
+  adminWalletTransactions  AdminWalletTransaction[]
+  driverWalletTransactions DriverWalletTransaction[]
+  driver                   Driver                    @relation(fields: [driverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([driverId], map: "payouts_driver_id_index")
+  @@index([status], map: "payouts_status_index")
+  @@map("payouts")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.VarChar(255)
+  userId    String    @map("user_id") @db.VarChar(255)
+  token     String    @unique @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  revoked   Boolean   @default(false)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "refresh_tokens_user_id_index")
+  @@index([token], map: "refresh_tokens_token_index")
+  @@map("refresh_tokens")
+}
+
+model ChatSession {
+  id            String        @id @default(uuid()) @db.VarChar(255)
+  customerId    String        @map("customer_id") @db.VarChar(255)
+  status        String        @default("active") @db.VarChar(50)
+  lastMessageAt DateTime?     @map("last_message_at") @db.DateTime(0)
+  createdAt     DateTime?     @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt     DateTime?     @updatedAt @map("updated_at") @db.DateTime(0)
+  messages      ChatMessage[]
+  customer      User          @relation("ChatCustomer", fields: [customerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([customerId], map: "chat_sessions_customer_id_index")
+  @@index([status], map: "chat_sessions_status_index")
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid()) @db.VarChar(255)
+  sessionId String      @map("session_id") @db.VarChar(255)
+  senderId  String      @map("sender_id") @db.VarChar(255)
+  message   String      @db.Text
+  isRead    Boolean     @default(false) @map("is_read")
+  createdAt DateTime?   @default(now()) @map("created_at") @db.DateTime(0)
+  sender    User        @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sessionId], map: "chat_messages_session_id_index")
+  @@index([senderId], map: "chat_messages_sender_id_index")
+  @@map("chat_messages")
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.VarChar(255)
+  userId    String    @map("user_id") @db.VarChar(255)
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(255)
+  message   String    @db.Text
+  read      Boolean   @default(false)
+  relatedId String?   @map("related_id") @db.VarChar(255)
+  metadata  Json?
+  createdAt DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "notifications_user_id_index")
+  @@index([read], map: "notifications_read_index")
+  @@index([type], map: "notifications_type_index")
+  @@map("notifications")
+}
+
+model Rating {
+  id         String    @id @default(uuid()) @db.VarChar(255)
+  bookingId  String    @unique(map: "ratings_booking_id_unique") @map("booking_id") @db.VarChar(255)
+  customerId String    @map("customer_id") @db.VarChar(255)
+  driverId   String    @map("driver_id") @db.VarChar(255)
+  rating     Int
+  review     String?   @db.LongText
+  createdAt  DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  booking    Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([customerId], map: "ratings_customer_id_index")
+  @@index([driverId], map: "ratings_driver_id_index")
+  @@index([bookingId], map: "ratings_booking_id_index")
+  @@map("ratings")
+}
+
+model ServiceState {
+  id        String    @id @default(uuid()) @db.VarChar(255)
+  name      String    @unique @db.VarChar(100)
+  is_active Boolean   @default(true) @map("is_active")
+  createdAt DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@index([is_active], map: "service_states_is_active_index")
+  @@map("service_states")
+}

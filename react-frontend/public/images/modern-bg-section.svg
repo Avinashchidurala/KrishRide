@@ -1,0 +1,19 @@
+<svg width="1920" height="400" viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FFF5F2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFE8E0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFF5F2;stop-opacity:1" />
+    </linearGradient>
+    <pattern id="dotsPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="1" fill="#FF6B35" opacity="0.1"/>
+    </pattern>
+  </defs>
+  
+  <!-- Base gradient -->
+  <rect width="1920" height="400" fill="url(#sectionGradient)"/>
+  
+  <!-- Dots pattern -->
+  <rect width="1920" height="400" fill="url(#dotsPattern)"/>
+</svg>
+

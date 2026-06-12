@@ -1,0 +1,300 @@
+/**
+ * PayU India Web Checkout Utility for React
+ *
+ * This utility handles:
+ * 1. Dynamic loading of PayU checkout script
+ * 2. Opening PayU checkout as an in-page popup/modal
+ * 3. Handling payment success/failure/cancel
+ * 4. Verifying payments via backend
+ *
+ * IMPORTANT: Hash is ALWAYS generated on backend. Frontend NEVER generates hash.
+ */
+
+import { VITE_API_BASE_URL } from './env';
+
+// PayU configuration interface (matches backend response)
+interface PayUConfig {
+  key: string;
+  txnid: string;
+  amount: string;
+  firstname: string;
+  email: string;
+  phone: string;
+  productinfo: string;
+  surl: string;
+  furl: string;
+  hash: string;
+  service_provider?: string;
+}
+
+// PayU Checkout configuration (for PayUCheckout.open)
+interface PayUCheckoutConfig {
+  key: string;
+  txnid: string;
+  amount: string;
+  firstname: string;
+  email: string;
+  phone: string;
+  productinfo: string;
+  surl: string;
+  furl: string;
+  hash: string;
+  service_provider?: string;
+  // PayU checkout UI customization
+  enforce_paymethod?: string[];
+  disable_paymethod?: string[];
+  // Callback functions
+  onSuccess?: (response: any) => void;
+  onFailure?: (response: any) => void;
+  onCancel?: () => void;
+}
+
+// Global PayU object type
+declare global {
+  interface Window {
+    PayUCheckout?: {
+      open: (config: PayUCheckoutConfig) => void;
+    };
+  }
+}
+
+// Script loading state
+let scriptLoadingPromise: Promise<void> | null = null;
+
+/**
+ * Dynamically load PayU checkout script
+ * Ensures script loads only once across the app
+ */
+const loadPayUScript = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Check if script is already loaded
+    if (window.PayUCheckout) {
+      resolve();
+      return;
+    }
+
+    // Check if script is already in DOM
+    const existingScript = document.querySelector('script[src*="checkout-static.payu.in"]');
+    if (existingScript) {
+      // Wait for script to load if it's already added but not ready
+      const checkLoaded = setInterval(() => {
+        if (window.PayUCheckout) {
+          clearInterval(checkLoaded);
+          resolve();
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkLoaded);
+        reject(new Error('PayU checkout script failed to load'));
+      }, 10000);
+      return;
+    }
+
+    // Create and load script
+    const script = document.createElement('script');
+    script.src = 'https://checkout-static.payu.in/checkout.min.js';
+    script.async = true;
+    script.integrity = 'sha384-8ZQFwGjXz5z5zq5wGjXz5z5zq5wGjXz5zq5wGjXz5z5zq5wGjXz5z5zq5wGjXz5z'; // Add integrity hash if available
+    script.crossOrigin = 'anonymous';
+
+    script.onload = () => {
+      // Give PayU some time to initialize after script loads
+      setTimeout(() => {
+        if (window.PayUCheckout) {
+          resolve();
+        } else {
+          reject(new Error('PayU checkout script loaded but PayUCheckout not available'));
+        }
+      }, 500);
+    };
+
+    script.onerror = (event) => {
+      console.error('PayU script load error:', event);
+      reject(new Error('Failed to load PayU checkout script. Please check your internet connection.'));
+    };
+
+    // Add script to head
+    document.head.appendChild(script);
+  });
+};
+
+/**
+ * Load PayU checkout script (singleton pattern)
+ * Returns promise that resolves when script is ready
+ */
+const ensurePayUScriptLoaded = (): Promise<void> => {
+  if (scriptLoadingPromise) {
+    return scriptLoadingPromise;
+  }
+
+  scriptLoadingPromise = loadPayUScript();
+  return scriptLoadingPromise;
+};
+
+/**
+ * Create PayU payment via backend API
+ */
+const createPayUPayment = async (
+  bookingId: string,
+  amount: number,
+  accessToken: string
+): Promise<PayUConfig> => {
+  const response = await fetch(`${VITE_API_BASE_URL}/payments/payu/create-payment`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      bookingId,
+      amount,
+    }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Failed to create PayU payment';
+    try {
+      const error = await response.json();
+      errorMessage = error.error || error.message || errorMessage;
+    } catch (e) {
+      errorMessage = response.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+/**
+ * Verify PayU payment via backend API
+ */
+const verifyPayUPayment = async (
+  txnid: string,
+  bookingId: string,
+  accessToken: string
+): Promise<{ success: boolean; verified: boolean; bookingId?: string }> => {
+  const response = await fetch(`${VITE_API_BASE_URL}/payments/payu/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      txnid,
+      bookingId,
+    }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Payment verification failed';
+    try {
+      const error = await response.json();
+      errorMessage = error.error || error.message || errorMessage;
+    } catch (e) {
+      errorMessage = response.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+/**
+ * Initiate PayU payment flow with popup checkout
+ *
+ * @param bookingId - Booking ID
+ * @param amount - Amount in rupees
+ * @param accessToken - User's access token
+ * @param onSuccess - Success callback
+ * @param onFailure - Failure callback
+ * @param onCancel - Cancel callback
+ */
+export const initiatePayUPayment = async (
+  bookingId: string,
+  amount: number,
+  accessToken: string,
+  onSuccess?: (txnid: string) => void,
+  onFailure?: (error: string) => void,
+  onCancel?: () => void
+): Promise<void> => {
+  try {
+    // Step 1: Ensure PayU script is loaded
+    await ensurePayUScriptLoaded();
+
+    // Step 2: Create payment via backend
+    const payuConfig = await createPayUPayment(bookingId, amount, accessToken);
+
+    // Step 3: Prepare PayU checkout configuration
+    const checkoutConfig: PayUCheckoutConfig = {
+      ...payuConfig,
+      service_provider: payuConfig.service_provider || 'payu_paisa',
+
+      // Success callback
+      onSuccess: async (response: any) => {
+        try {
+          console.log('PayU payment success:', response);
+
+          // Verify payment with backend
+          const verification = await verifyPayUPayment(
+            response.txnid || payuConfig.txnid,
+            bookingId,
+            accessToken
+          );
+
+          if (verification.verified) {
+            onSuccess?.(response.txnid || payuConfig.txnid);
+          } else {
+            onFailure?.('Payment verification failed. Please contact support.');
+          }
+        } catch (error: any) {
+          console.error('PayU payment verification error:', error);
+          onFailure?.(error.message || 'Payment verification failed');
+        }
+      },
+
+      // Failure callback
+      onFailure: (response: any) => {
+        console.error('PayU payment failed:', response);
+        const errorMessage = response.error_Message || response.error_message || 'Payment failed';
+        onFailure?.(errorMessage);
+      },
+
+      // Cancel callback
+      onCancel: () => {
+        console.log('PayU payment cancelled by user');
+        onCancel?.();
+      },
+    };
+
+    // Step 4: Open PayU checkout as popup
+    if (!window.PayUCheckout) {
+      throw new Error('PayU checkout is not available');
+    }
+
+    // Open PayU checkout as in-page popup
+    window.PayUCheckout.open(checkoutConfig);
+
+  } catch (error: any) {
+    console.error('Error initiating PayU payment:', error);
+    const errorMessage = error?.message || error?.toString() || 'Failed to initiate payment';
+    onFailure?.(errorMessage);
+    throw error;
+  }
+};
+
+/**
+ * Check if PayU checkout is available
+ */
+export const isPayUAvailable = (): boolean => {
+  return !!window.PayUCheckout;
+};
+
+/**
+ * Get PayU checkout version (for debugging)
+ */
+export const getPayUVersion = (): string | null => {
+  // PayU doesn't expose version info, but we can check if it's loaded
+  return window.PayUCheckout ? 'loaded' : null;
+};
