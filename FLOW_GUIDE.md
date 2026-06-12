@@ -123,12 +123,34 @@ graph TD
 
 ---
 
-## 4. Admin Panel Features
+## 4. Admin Panel & Dashboard Flow
 
-Administrators use the web dashboard (`react-frontend/src/pages/admin`) to keep the platform secure and functional.
+Administrators use the web panel (`react-frontend/src/pages/admin`) to oversee the platform's operations. The landing view is the **Admin Dashboard** (`/admin/dashboard`), which aggregates stats and maps actions.
 
-- **Dashboard Panel**: Summary metrics showing platform health, active trips, and transaction volume.
-- **KYC Approvals (`/admin/kyc`)**: Dedicated queue to view driver uploaded license/vehicle documents and approve/reject their capability to publish rides.
-- **SOS Alert Panel (`/admin/sos`)**: Critical alarm dashboard. Triggers alerts in real-time if a rider or driver presses the emergency SOS button. Displays maps, route info, and coordinates.
-- **Support Tickets (`/admin/support`)**: Central hub to read, reply to, and resolve complaints submitted by users.
-- **Transaction Logs**: View platform ledger details, customer refunds, and driver payout history.
+### 4.1 How the Admin Dashboard Works
+
+When the dashboard page mounts, it queries the backend API using two main services:
+1. **`adminApi.getDashboardStats()`**: Retrieves current business indicators.
+2. **`adminApi.getRecentActivity()`**: Fetches details about new signups and active records.
+
+#### UI Sections:
+- **Stats Card Grid**: Displays five KPI boxes:
+  - **Total Users**: Overall active account registrations (drivers and riders).
+  - **Total Rides**: Number of scheduled departures.
+  - **Completed Bookings**: Bookings that finished successfully.
+  - **Cancelled Bookings**: Help identify system drop-off rates.
+  - **Revenue**: Total earnings from commissions, formatted in **Indian Rupees (INR)** (e.g., `₹5,000.00`) dynamically using `Intl.NumberFormat('en-IN')`.
+- **Quick Actions Hub**: Provides navigation cards to management sections (Manage Users, Manage Rides, View Finance) with hover and slide transitions.
+- **Recent Activity Live Tables**: Displays three live tables showing the latest updates:
+  - **Recent Users**: Displaying Name, Role (blue/green chips for Driver/Customer), and Registration Date. Clicking takes you directly to the User Details page (`/admin/users/:id`).
+  - **Recent Rides**: Showing Driver name, departure route (pickup ➔ drop), and creation date.
+  - **Recent Bookings**: Displaying Customer name, status (Success/Error/Primary color-coded chips), and booking date.
+
+---
+
+### 4.2 Extended Admin Features
+
+- **KYC Approvals (`/admin/kyc`)**: Dedicated review page displaying drivers' uploaded licenses, cards, and vehicle specifications. Click "Approve" to unlock their profile or "Reject" with a feedback reason.
+- **SOS Alarm Hub (`/admin/sos`)**: Receives WebSocket alerts if a rider or driver triggers an SOS on the mobile app. Plays an alarm, displays real-time GPS coordinates, vehicle registration details, and emergency contacts.
+- **Support Tickets (`/admin/support`)**: Helpdesk dashboard to categorize, answer, and close complaints or platform bugs reported by users.
+- **Finance & Payouts (`/admin/payouts`)**: Approves manual bank withdrawals requested by drivers from their local wallets.
